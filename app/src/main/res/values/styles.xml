@@ -1,0 +1,18 @@
+<!--
+  ~           Copyright © 2016 Stanislav Petriakov
+  ~  Distributed under the Boost Software License, Version 1.0.
+  ~     (See accompanying file LICENSE_1_0.txt or copy at
+  ~           http://www.boost.org/LICENSE_1_0.txt)
+  -->
+
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+</resources>
