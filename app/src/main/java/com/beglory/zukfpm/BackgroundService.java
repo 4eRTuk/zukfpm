@@ -104,13 +104,16 @@ public class BackgroundService extends Service {
                                             }
                                         }
 
-                                        if (isAtHome)
+                                        activity = null;
+                                        if (isAtHome && list.size() > 0)
                                             activity = list.get(0);
-                                        else
+                                        else if (list.size() > 1)
                                             activity = list.get(1);
 
-                                        dos2.writeBytes("am start -n " + activity + "\n");
-                                        dos2.flush();
+                                        if (activity != null) {
+                                            dos2.writeBytes("am start -n " + activity + "\n");
+                                            dos2.flush();
+                                        }
                                     }
 
                                     mLastCheck = time;
