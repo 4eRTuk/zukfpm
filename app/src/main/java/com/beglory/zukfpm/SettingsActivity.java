@@ -15,7 +15,9 @@ public class SettingsActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        startService(new Intent(this, BackgroundService.class));
+        Intent start = new Intent(this, BackgroundService.class);
+        start.setAction(BackgroundService.ACTION_START);
+        startService(start);
         finish();
     }
 }

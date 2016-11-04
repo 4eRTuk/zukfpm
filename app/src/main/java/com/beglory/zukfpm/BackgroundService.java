@@ -7,9 +7,9 @@
 
 package com.beglory.zukfpm;
 
+import android.app.ActivityManager;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
@@ -23,37 +23,58 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class BackgroundService extends Service {
-    final static String FPC_HAL = "fpc_fingerprint_hal:D";
-    final static String FILTER = "logcat -s " + FPC_HAL;
-    final static String CLEAR = "logcat -c";
+import static android.app.ActivityManager.MOVE_TASK_NO_USER_ACTION;
 
-    protected Handler mHandler;
-    protected long mLastCheck;
+public class BackgroundService extends Service {
+    private final static String FPC_HAL = "fpc_fingerprint_hal:D";
+    private final static String FILTER = "logcat -s " + FPC_HAL;
+    private final static String CLEAR = "logcat -c";
+
+    public final static String ACTION_START = "com.beglory.zukfpm.START";
+    public final static String ACTION_STOP = "com.beglory.zukfpm.STOP";
+    public final static String ACTION_CHANGE = "com.beglory.zukfpm.CHANGE";
+
+    private long mLastCheck;
     private SimpleDateFormat mDateFormat;
+    private Thread mThread;
+    private volatile boolean mIsRunning;
+    private ActivityManager mActivityManager;
 
     @Override
     public void onCreate() {
         super.onCreate();
-
-        try {
-            Process process = Runtime.getRuntime().exec("su");
-            DataOutputStream dos = new DataOutputStream(process.getOutputStream());
-            dos.writeBytes(CLEAR + "\n");
-            dos.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        mHandler = new Handler(getMainLooper());
+        mActivityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         mDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        new Thread(new Runnable() {
+        String action;
+        action = intent != null && intent.getAction() != null ? intent.getAction() : "";
+        switch (action) {
+            case ACTION_START:
+                start();
+                break;
+            case ACTION_STOP:
+                mIsRunning = false;
+                break;
+            case ACTION_CHANGE:
+
+                break;
+            default:
+                if (mThread == null)
+                    start();
+                break;
+        }
+
+        return START_STICKY;
+    }
+
+    private void start() {
+        mIsRunning = true;
+        mThread = new Thread(new Runnable() {
             public void run() {
-                while (true) {
+                while (mIsRunning) {
                     try {
                         Process process = Runtime.getRuntime().exec("su");
                         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -78,42 +99,22 @@ public class BackgroundService extends Service {
 
                                     if (finalLine.equals("249")) {
                                         Process activities = Runtime.getRuntime().exec("su");
-                                        BufferedReader reader2 = new BufferedReader(new InputStreamReader(activities.getInputStream()));
                                         DataOutputStream dos2 = new DataOutputStream(activities.getOutputStream());
-                                        dos2.writeBytes("dumpsys activity activities" + "\n");
+                                        dos2.writeBytes("dumpsys activity activities\n");
                                         dos2.flush();
+                                        BufferedReader reader2 = new BufferedReader(new InputStreamReader(activities.getInputStream()));
 
-                                        boolean isAtHome = false;
-                                        String activity = Long.MAX_VALUE + "-" + Long.MIN_VALUE;
-                                        List<String> list = new ArrayList<>();
+                                        List<Integer> list = new ArrayList<>();
                                         while ((line = reader2.readLine()) != null) {
-                                            if (line.contains("intent=")) {
-                                                String clazz = parseActivity(line);
-                                                if (clazz == null)
-                                                    continue;
-
-                                                if (line.contains("android.intent.category.HOME"))
-                                                    activity = clazz;
-                                                else
-                                                    list.add(clazz);
-                                            }
-
-                                            if (line.contains("mFocusedActivity")) {
-                                                isAtHome = line.contains(activity);
+                                            if (line.contains("Run #")) {
+                                                int id = parseTaskId(line);
+                                                list.add(id);
+                                            } else if (line.contains("mFocusedActivity"))
                                                 break;
-                                            }
                                         }
 
-                                        activity = null;
-                                        if (isAtHome && list.size() > 0)
-                                            activity = list.get(0);
-                                        else if (list.size() > 1)
-                                            activity = list.get(1);
-
-                                        if (activity != null) {
-                                            dos2.writeBytes("am start -n " + activity + "\n");
-                                            dos2.flush();
-                                        }
+                                        if (list.size() > 1)
+                                            mActivityManager.moveTaskToFront(list.get(1), MOVE_TASK_NO_USER_ACTION);
                                     }
 
                                     mLastCheck = time;
@@ -122,21 +123,21 @@ public class BackgroundService extends Service {
                         }
 
                         Thread.sleep(1250);
-                    } catch (InterruptedException | IOException | ParseException ignored) {}
+                    } catch (InterruptedException | IOException | ParseException ignored) {
+                        ignored.printStackTrace();
+                    }
                 }
+                stopSelf();
             }
-        }).start();
-
-        return START_STICKY;
+        });
+        mThread.start();
     }
 
-    private String parseActivity(String intent) {
-        String[] elements = intent.split(" ");
-        for (String element : elements)
-            if (element.startsWith("cmp="))
-                return element.replace("cmp=", "").replace("}", "").replace(",", "");
-
-        return null;
+    private int parseTaskId(String line) {
+        String[] elements = line.split(" ");
+        String id = elements[elements.length - 1];
+        id = id.substring(1, id.length() - 1);
+        return Integer.parseInt(id);
     }
 
     @Nullable
