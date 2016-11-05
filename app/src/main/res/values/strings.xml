@@ -7,4 +7,17 @@
 
 <resources>
     <string name="app_name">Zuk Fingerprint Remap</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="started">Service is running</string>
+    <string name="stopped">Service stopped</string>
+    <string name="auto_start">Start on open app</string>
+    <string name="on_boot">Start on boot</string>
+    <string name="home">Home action</string>
+    <string name="last">Last app action</string>
+    <string name="key">Gesture</string>
+    <string name="long_tap">Long tap</string>
+    <string name="swipe_left">Swipe left</string>
+    <string name="swipe_right">Swipe right</string>
+    <string name="save">Save</string>
 </resources>

@@ -11,10 +11,11 @@ import android.app.ActivityManager;
 import android.app.Service;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.IBinder;
-import android.os.PowerManager;
+import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 
 import java.io.BufferedReader;
@@ -35,15 +36,17 @@ public class BackgroundService extends Service {
     private final static String CLEAR = "logcat -c";
 
     public final static String ACTION_START = "com.beglory.zukfpm.START";
+    public final static String ACTION_PAUSE = "com.beglory.zukfpm.PAUSE";
     public final static String ACTION_STOP = "com.beglory.zukfpm.STOP";
     public final static String ACTION_CHANGE = "com.beglory.zukfpm.CHANGE";
 
+    private Thread mThread;
+    private ActivityManager mActivityManager;
+    private ActionReceiver mScreenReceiver = new ActionReceiver();
     private long mLastCheck;
     private SimpleDateFormat mDateFormat;
-    private Thread mThread;
-    private volatile boolean mIsRunning;
-    private ActivityManager mActivityManager;
-    private String mLauncherPackage;
+    private volatile boolean mIsRunning, mHome, mLast;
+    private volatile String mLauncherPackage, mHomeKey, mLastKey;
 
     @Override
     public void onCreate() {
@@ -51,15 +54,31 @@ public class BackgroundService extends Service {
 
         IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
-        registerReceiver(new ActionReceiver(), filter);
+        registerReceiver(mScreenReceiver, filter);
 
         Intent intent = new Intent(Intent.ACTION_MAIN);
         intent.addCategory(Intent.CATEGORY_HOME);
         ResolveInfo resolveInfo = getPackageManager().resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY);
         mLauncherPackage = resolveInfo.activityInfo.packageName;
 
+        readPreferences();
+
         mActivityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
         mDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.getDefault());
+    }
+
+    private void readPreferences() {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mHome = preferences.getBoolean("action_home", true);
+        mLast = preferences.getBoolean("action_last", true);
+        mHomeKey = preferences.getString("home_key", "102");
+        mLastKey = preferences.getString("last_key", "249");
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        unregisterReceiver(mScreenReceiver);
     }
 
     @Override
@@ -70,9 +89,14 @@ public class BackgroundService extends Service {
             case ACTION_STOP:
                 mIsRunning = false;
                 mThread = null;
+                stopSelf();
+                break;
+            case ACTION_PAUSE:
+                mIsRunning = false;
+                mThread = null;
                 break;
             case ACTION_CHANGE:
-
+                readPreferences();
                 break;
             case ACTION_START:
             default:
@@ -84,6 +108,9 @@ public class BackgroundService extends Service {
     }
 
     private void start() {
+        if (mIsRunning && mThread != null)
+            return;
+
         mIsRunning = true;
         mThread = new Thread(new Runnable() {
             public void run() {
@@ -97,21 +124,21 @@ public class BackgroundService extends Service {
                         dos.flush();
 
                         String line;
-                        while (isScreenOn() && (line = reader.readLine()) != null) {
+                        while (mIsRunning && (line = reader.readLine()) != null) {
                             if (line.contains("nav_event_report")) {
                                 long time = mDateFormat.parse("2016-" + line.substring(0, 18)).getTime();
                                 if (time > mLastCheck) {
                                     int start = line.indexOf("Key: ");
                                     final String finalLine = line.substring(start + 5, start + 8);
 
-                                    if (finalLine.equals("102")) {
+                                    if (finalLine.equals(mHomeKey) && mHome) {
                                         Intent startMain = new Intent(Intent.ACTION_MAIN);
                                         startMain.addCategory(Intent.CATEGORY_HOME);
                                         startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                         startActivity(startMain);
                                     }
 
-                                    if (finalLine.equals("249")) {
+                                    if (finalLine.equals(mLastKey) && mLast) {
                                         Process activities = Runtime.getRuntime().exec("su");
                                         DataOutputStream dos2 = new DataOutputStream(activities.getOutputStream());
 //                                        dos2.writeBytes("dumpsys activity activities\n");
@@ -161,11 +188,6 @@ public class BackgroundService extends Service {
         String id = elements[6];
         id = id.substring(1);
         return Integer.parseInt(id);
-    }
-
-    public boolean isScreenOn() {
-        PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
-        return powerManager.isInteractive();
     }
 
     @Nullable

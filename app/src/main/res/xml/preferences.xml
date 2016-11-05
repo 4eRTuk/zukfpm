@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~           Copyright © 2016 Stanislav Petriakov
+  ~  Distributed under the Boost Software License, Version 1.0.
+  ~     (See accompanying file LICENSE_1_0.txt or copy at
+  ~           http://www.boost.org/LICENSE_1_0.txt)
+  -->
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="auto_start"
+        android:title="@string/auto_start"/>
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="start_on_boot"
+        android:title="@string/on_boot"/>
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="action_home"
+        android:title="@string/home"/>
+
+    <ListPreference
+        android:defaultValue="102"
+        android:dependency="action_home"
+        android:entries="@array/fpc_title"
+        android:entryValues="@array/fpc_values"
+        android:key="home_key"
+        android:title="@string/key"/>
+
+    <CheckBoxPreference
+        android:defaultValue="true"
+        android:key="action_last"
+        android:title="@string/last"/>
+
+    <ListPreference
+        android:defaultValue="249"
+        android:dependency="action_last"
+        android:entries="@array/fpc_title"
+        android:entryValues="@array/fpc_values"
+        android:key="last_key"
+        android:title="@string/key"/>
+</PreferenceScreen>

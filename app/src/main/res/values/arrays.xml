@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~           Copyright © 2016 Stanislav Petriakov
+  ~  Distributed under the Boost Software License, Version 1.0.
+  ~     (See accompanying file LICENSE_1_0.txt or copy at
+  ~           http://www.boost.org/LICENSE_1_0.txt)
+  -->
+
+<resources>
+    <string-array name="fpc_title">
+        <item>@string/long_tap</item>
+        <item>@string/swipe_right</item>
+        <item>@string/swipe_left</item>
+    </string-array>
+    <string-array name="fpc_values" translatable="false">
+        <item>102</item>
+        <item>249</item>
+        <item>254</item>
+    </string-array>
+</resources>

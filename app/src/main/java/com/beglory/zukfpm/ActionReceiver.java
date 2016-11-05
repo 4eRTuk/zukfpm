@@ -17,7 +17,7 @@ public class ActionReceiver extends WakefulBroadcastReceiver {
         Intent service = new Intent(context, BackgroundService.class);
 
         if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-            service.setAction(BackgroundService.ACTION_STOP);
+            service.setAction(BackgroundService.ACTION_PAUSE);
         } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON) || intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
             service.setAction(BackgroundService.ACTION_START);
         } else {
