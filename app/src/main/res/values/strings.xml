@@ -13,9 +13,11 @@
     <string name="stopped">Service stopped</string>
     <string name="auto_start">Start on open app</string>
     <string name="on_boot">Start on boot</string>
-    <string name="home">Home action</string>
-    <string name="last">Last app action</string>
-    <string name="key">Gesture</string>
+    <string name="none">Default</string>
+    <string name="home">Go to home</string>
+    <string name="last">Switch last app</string>
+    <string name="assist">Google Assist</string>
+    <string name="search">Voice Search</string>
     <string name="long_tap">Long tap</string>
     <string name="swipe_left">Swipe left</string>
     <string name="swipe_right">Swipe right</string>

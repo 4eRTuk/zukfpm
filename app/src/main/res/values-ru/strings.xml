@@ -13,10 +13,12 @@
     <string name="started">Сервис запущен</string>
     <string name="stopped">Сервис остановлен</string>
     <string name="auto_start">Запускать при открытии настроек</string>
-    <string name="on_boot">Звапускать при загрузке системы</string>
-    <string name="home">Действие: \"Домой\"</string>
-    <string name="last">Действие: \"Последнее приложение\"</string>
-    <string name="key">Жест</string>
+    <string name="on_boot">Запускать при загрузке системы</string>
+    <string name="none">Без изменений</string>
+    <string name="home">Домой</string>
+    <string name="last">Последнее приложение</string>
+    <string name="assist">Google Assist</string>
+    <string name="search">Голосовой поиск</string>
     <string name="long_tap">Долгий тап</string>
     <string name="swipe_left">Свайп влево</string>
     <string name="swipe_right">Свайп вправо</string>

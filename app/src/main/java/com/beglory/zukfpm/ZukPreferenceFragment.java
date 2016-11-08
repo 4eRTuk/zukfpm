@@ -13,14 +13,21 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 
 public class ZukPreferenceFragment extends PreferenceFragment implements Preference.OnPreferenceChangeListener {
+    public final static String KEY_LONG_TAP = "long_tap";
+    public final static String KEY_SWIPE_LEFT = "swipe_left";
+    public final static String KEY_SWIPE_RIGHT = "swipe_right";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         addPreferencesFromResource(R.xml.preferences);
-        ListPreference list = (ListPreference) findPreference("home_key");
+        ListPreference list = (ListPreference) findPreference("long_tap");
         list.setSummary(list.getEntry());
         list.setOnPreferenceChangeListener(this);
-        list = (ListPreference) findPreference("last_key");
+        list = (ListPreference) findPreference("swipe_left");
+        list.setSummary(list.getEntry());
+        list.setOnPreferenceChangeListener(this);
+        list = (ListPreference) findPreference("swipe_right");
         list.setSummary(list.getEntry());
         list.setOnPreferenceChangeListener(this);
     }

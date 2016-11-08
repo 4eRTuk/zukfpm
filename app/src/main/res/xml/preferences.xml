@@ -17,29 +17,24 @@
         android:key="start_on_boot"
         android:title="@string/on_boot"/>
 
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="action_home"
-        android:title="@string/home"/>
+    <ListPreference
+        android:defaultValue="home"
+        android:entries="@array/action_title"
+        android:entryValues="@array/action_values"
+        android:key="long_tap"
+        android:title="@string/long_tap"/>
 
     <ListPreference
-        android:defaultValue="102"
-        android:dependency="action_home"
-        android:entries="@array/fpc_title"
-        android:entryValues="@array/fpc_values"
-        android:key="home_key"
-        android:title="@string/key"/>
-
-    <CheckBoxPreference
-        android:defaultValue="true"
-        android:key="action_last"
-        android:title="@string/last"/>
+        android:defaultValue="last"
+        android:entries="@array/action_title"
+        android:entryValues="@array/action_values"
+        android:key="swipe_right"
+        android:title="@string/swipe_right"/>
 
     <ListPreference
-        android:defaultValue="249"
-        android:dependency="action_last"
-        android:entries="@array/fpc_title"
-        android:entryValues="@array/fpc_values"
-        android:key="last_key"
-        android:title="@string/key"/>
+        android:defaultValue="none"
+        android:entries="@array/action_title"
+        android:entryValues="@array/action_values"
+        android:key="swipe_left"
+        android:title="@string/swipe_left"/>
 </PreferenceScreen>

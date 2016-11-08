@@ -7,7 +7,10 @@
 
 package com.beglory.zukfpm;
 
+import android.app.SearchManager;
 import android.app.Service;
+import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -37,12 +40,18 @@ public class BackgroundService extends Service {
     public final static String ACTION_STOP = "com.beglory.zukfpm.STOP";
     public final static String ACTION_CHANGE = "com.beglory.zukfpm.CHANGE";
 
+    private final static String ACTION_NONE = "none";
+    private final static String ACTION_HOME = "home";
+    private final static String ACTION_LAST = "last";
+    private final static String ACTION_ASSIST = "assist";
+    private final static String ACTION_SEARCH = "search";
+
     private Thread mThread;
     private ActionReceiver mScreenReceiver = new ActionReceiver();
     private long mLastCheck;
     private SimpleDateFormat mDateFormat;
-    private volatile boolean mIsRunning, mHome, mLast;
-    private volatile String mLauncherPackage, mHomeKey, mLastKey;
+    private volatile boolean mIsRunning, mLongTap, mSwRight, mSwLeft;
+    private volatile String mLauncherPackage, mLongTapAction, mSwRightAction, mSwLeftAction;
 
     @Override
     public void onCreate() {
@@ -64,10 +73,12 @@ public class BackgroundService extends Service {
 
     private void readPreferences() {
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        mHome = preferences.getBoolean("action_home", true);
-        mLast = preferences.getBoolean("action_last", true);
-        mHomeKey = preferences.getString("home_key", "102");
-        mLastKey = preferences.getString("last_key", "249");
+        mLongTapAction = preferences.getString(ZukPreferenceFragment.KEY_LONG_TAP, ACTION_HOME);
+        mSwRightAction = preferences.getString(ZukPreferenceFragment.KEY_SWIPE_RIGHT, ACTION_LAST);
+        mSwLeftAction = preferences.getString(ZukPreferenceFragment.KEY_SWIPE_LEFT, ACTION_NONE);
+        mLongTap = !mLongTapAction.equals(ACTION_NONE);
+        mSwRight = !mSwRightAction.equals(ACTION_NONE);
+        mSwLeft = !mSwLeftAction.equals(ACTION_NONE);
     }
 
     @Override
@@ -126,49 +137,14 @@ public class BackgroundService extends Service {
                                     int start = line.indexOf("Key: ");
                                     final String finalLine = line.substring(start + 5, start + 8);
 
-                                    if (finalLine.equals(mHomeKey) && mHome) {
-                                        Intent startMain = new Intent(Intent.ACTION_MAIN);
-                                        startMain.addCategory(Intent.CATEGORY_HOME);
-                                        startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                        startActivity(startMain);
-                                    }
+                                    if (finalLine.equals("102") && mLongTap)
+                                        selectAction(mLongTapAction);
 
-                                    if (finalLine.equals(mLastKey) && mLast) {
-                                        Process activities = Runtime.getRuntime().exec("su");
-                                        DataOutputStream dos2 = new DataOutputStream(activities.getOutputStream());
-                                        dos2.writeBytes("dumpsys activity recents\n");
-                                        dos2.flush();
-                                        BufferedReader reader2 = new BufferedReader(new InputStreamReader(activities.getInputStream()));
+                                    if (finalLine.equals("249") && mSwRight)
+                                        selectAction(mSwRightAction);
 
-                                        List<LastApp> list = new ArrayList<>();
-                                        while ((line = reader2.readLine()) != null) {
-                                            if (line.contains("Recent #")) {
-                                                if (line.contains(mLauncherPackage))
-                                                    if (list.size() != 0)
-                                                        continue;
-
-                                                int taskId = parseTaskId(line);
-                                                String affinity = parseAffinity(line);
-                                                list.add(new LastApp(affinity, taskId));
-                                            } else if (line.contains("realActivity")) {
-                                                if (list.size() > 0) {
-                                                    String affinity = list.get(list.size() - 1).getAffinity();
-                                                    if (line.contains(affinity))
-                                                        list.get(list.size() - 1).setActivity(parseActivity(line));
-                                                }
-
-                                                if (list.size() == 2)
-                                                    break;
-                                            } else if (line.contains("hasBeenVisible=false"))
-                                                break;
-                                        }
-
-                                        if (list.size() > 1) {
-                                            dos2.writeBytes("am start " + list.get(1).getActivity() + "\n");
-                                            dos2.flush();
-                                            dos2.close();
-                                        }
-                                    }
+                                    if (finalLine.equals("254") && mSwLeft)
+                                        selectAction(mSwLeftAction);
 
                                     mLastCheck = time;
                                 }
@@ -185,6 +161,68 @@ public class BackgroundService extends Service {
         mThread.start();
     }
 
+    private void selectAction(String action) throws IOException {
+        switch (action) {
+            case ACTION_HOME:
+                goToHome();
+                break;
+            case ACTION_LAST:
+                switchLastApp();
+                break;
+            case ACTION_ASSIST:
+                startAssist();
+                break;
+            case ACTION_SEARCH:
+                startSearch();
+                break;
+        }
+    }
+
+    private void goToHome() {
+        Intent startMain = new Intent(Intent.ACTION_MAIN);
+        startMain.addCategory(Intent.CATEGORY_HOME);
+        startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(startMain);
+    }
+
+    private void switchLastApp() throws IOException {
+        Process activities = Runtime.getRuntime().exec("su");
+        DataOutputStream dos = new DataOutputStream(activities.getOutputStream());
+        dos.writeBytes("dumpsys activity recents\n");
+        dos.flush();
+        BufferedReader reader2 = new BufferedReader(new InputStreamReader(activities.getInputStream()));
+
+        String line;
+        List<LastApp> list = new ArrayList<>();
+        while ((line = reader2.readLine()) != null) {
+            if (line.contains("Recent #")) {
+                if (line.contains(mLauncherPackage))
+                    if (list.size() != 0)
+                        continue;
+
+                int taskId = parseTaskId(line);
+                String affinity = parseAffinity(line);
+                list.add(new LastApp(affinity, taskId));
+            } else if (line.contains("realActivity")) {
+                if (list.size() > 0) {
+                    String affinity = list.get(list.size() - 1).getAffinity();
+                    if (line.contains(affinity))
+                        list.get(list.size() - 1).setActivity(parseActivity(line));
+                }
+
+                if (list.size() == 2)
+                    break;
+            } else if (line.contains("hasBeenVisible=false"))
+                break;
+        }
+
+        if (list.size() > 1) {
+            dos.writeBytes("am start " + list.get(1).getActivity() + "\n");
+            dos.flush();
+            dos.close();
+        }
+    }
+
     private int parseTaskId(String line) {
         String[] elements = line.split(" ");
         String id = elements[6];
@@ -199,6 +237,27 @@ public class BackgroundService extends Service {
 
     private String parseActivity(String line) {
         return line.replace("    realActivity=", "");
+    }
+
+    // https://github.com/CyanogenMod/android_frameworks_base/blob/19139443a777843efe4e0f02a77e939629bd249b
+    // /services/core/java/com/android/server/policy/PhoneWindowManager.java#L3728
+    private void startSearch() {
+        Intent intent = new Intent(Intent.ACTION_SEARCH_LONG_PRESS);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try {
+            SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+            if (searchManager != null)
+                searchManager.stopSearch();
+            startActivity(intent);
+        } catch (ActivityNotFoundException ignored) { }
+    }
+
+    private void startAssist() throws IOException {
+        Process activities = Runtime.getRuntime().exec("su");
+        DataOutputStream dos = new DataOutputStream(activities.getOutputStream());
+        dos.writeBytes("input keyevent 219\n");
+        dos.flush();
+        dos.close();
     }
 
     public boolean isScreenOn() {

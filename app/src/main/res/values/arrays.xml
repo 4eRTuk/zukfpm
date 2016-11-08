@@ -7,14 +7,18 @@
   -->
 
 <resources>
-    <string-array name="fpc_title">
-        <item>@string/long_tap</item>
-        <item>@string/swipe_right</item>
-        <item>@string/swipe_left</item>
+    <string-array name="action_title">
+        <item>@string/none</item>
+        <item>@string/home</item>
+        <item>@string/last</item>
+        <item>@string/assist</item>
+        <item>@string/search</item>
     </string-array>
-    <string-array name="fpc_values" translatable="false">
-        <item>102</item>
-        <item>249</item>
-        <item>254</item>
+    <string-array name="action_values" translatable="false">
+        <item>none</item>
+        <item>home</item>
+        <item>last</item>
+        <item>assist</item>
+        <item>search</item>
     </string-array>
 </resources>
