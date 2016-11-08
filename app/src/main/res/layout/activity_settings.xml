@@ -11,7 +11,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="?attr/listPreferredItemPaddingLeft">
+    android:padding="?android:attr/listPreferredItemPaddingLeft">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -55,13 +55,13 @@
 
     <TextView
         android:id="@+id/service_status"
-        style="@style/TextAppearance.AppCompat.Medium"
+        style="@android:style/TextAppearance.Material.Medium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
     <Button
         android:id="@+id/service_button"
-        style="@style/Base.Widget.AppCompat.Button"
+        style="@android:style/Widget.Material.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="onClick"/>
@@ -74,7 +74,7 @@
 
     <Button
         android:id="@+id/save"
-        style="@style/Base.Widget.AppCompat.Button"
+        style="@android:style/Widget.Material.Button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:onClick="onClick"

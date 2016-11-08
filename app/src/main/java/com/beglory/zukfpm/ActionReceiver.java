@@ -7,18 +7,16 @@
 
 package com.beglory.zukfpm;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v4.content.WakefulBroadcastReceiver;
 
-public class ActionReceiver extends WakefulBroadcastReceiver {
+public class ActionReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         Intent service = new Intent(context, BackgroundService.class);
 
-        if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-            service.setAction(BackgroundService.ACTION_PAUSE);
-        } else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON) || intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
+        if (intent.getAction().equals(Intent.ACTION_SCREEN_ON) || intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED)) {
             service.setAction(BackgroundService.ACTION_START);
         } else {
             service.setAction(intent.getAction());
@@ -27,6 +25,6 @@ public class ActionReceiver extends WakefulBroadcastReceiver {
         if (intent.getExtras() != null)
             service.putExtras(intent.getExtras());
 
-        startWakefulService(context, service);
+        context.startService(service);
     }
 }
